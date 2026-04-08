@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-land_list_be_production}
+    volumes:
+      - db_prod_data:/var/lib/postgresql/data
+
+  be:
+    build:
+      context: ./land-list-be
+    environment:
+      RAILS_ENV: production
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-land_list_be_production}
+    ports:
+      - "8081:3000"
+    depends_on:
+      - db
+
+  fe:
+    build:
+      context: ./land-list-fe
+      args:
+        REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL:-http://localhost:8081}
+    environment:
+      REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL:-http://localhost:8081}
+    ports:
+      - "8080:80"
+    depends_on:
+      - be
+
+volumes:
+  db_prod_data:
+
